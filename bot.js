@@ -1,9 +1,9 @@
-const { Client, GatewayIntentBits } = require('discord.js');
 const express = require('express');
-const cors = require('cors');
+const { Client, GatewayIntentBits } = require('discord.js');
+require('dotenv').config();
 
 const app = express();
-app.use(cors());
+const port = process.env.PORT || 3000;
 
 const client = new Client({
   intents: [
@@ -13,32 +13,23 @@ const client = new Client({
   ]
 });
 
-const GUILD_ID = "TU_GUILD_ID"; // Pon aquí el ID de tu servidor
+const GUILD_ID = process.env.GUILD_ID;
 
-client.once('ready', () => {
-  console.log(`Bot conectado como ${client.user.tag}`);
-});
+client.login(process.env.BOT_TOKEN);
 
-// Endpoint para la web
 app.get('/members', async (req, res) => {
   try {
     const guild = await client.guilds.fetch(GUILD_ID);
-    await guild.members.fetch(); // Traer todos los miembros
-    const onlineMembers = guild.members.cache.filter(
-      m => m.presence?.status === 'online'
-    );
-    res.json(onlineMembers.map(m => ({ username: m.user.username, status: m.presence.status })));
+    await guild.members.fetch();
+    const onlineMembers = guild.members.cache
+      .filter(member => member.presence?.status === 'online')
+      .map(member => ({ username: member.user.username }));
+
+    res.json(onlineMembers);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "No se pudo obtener miembros" });
+    res.json([]);
   }
 });
 
-// Poner el bot online
-client.login(process.env.DISCORD_TOKEN);
-
-// Poner el servidor web online
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor web corriendo en puerto ${PORT}`);
-});
+app.listen(port, () => console.log(`Servidor activo en puerto ${port}`));
